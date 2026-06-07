@@ -1,0 +1,221 @@
+{% raw %}
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\input{glyphtounicode}
+
+
+%----------FONT OPTIONS----------
+% sans-serif
+% \usepackage[sfdefault]{FiraSans}
+% \usepackage{Times}
+% \usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{noto-sans}
+% \usepackage[default]{sourcesanspro}
+
+% serif
+% \usepackage{CormorantGaramond}
+% \usepackage{charter}
+
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{% endraw %}
+
+\begin{document}
+
+\begin{center}
+    \textbf{\Huge \scshape {{ profile.personal.name|latex }}} \\ \vspace{1pt}
+    {% set header_parts = [] %}
+    {% if profile.personal.website %}
+        {% set website_label = profile.personal.website_label or profile.personal.website.replace('/cv', '') %}
+        {% set _ = header_parts.append('\\textcolor{Black}{\\href{https://' ~ profile.personal.website|latex ~ '}{\\underline{' ~ website_label|latex ~ '}}}') %}
+    {% endif %}
+    {% for link in profile.personal.links %}
+        {% set _ = header_parts.append('\\textcolor{Black}{\\href{' ~ link.url|latex ~ '}{\\underline{' ~ link.label|latex ~ '}}}') %}
+    {% endfor %}
+    {% if profile.personal.linkedin %}
+        {% set _ = header_parts.append('\\textcolor{Black}{\\href{https://' ~ profile.personal.linkedin|latex ~ '}{\\underline{' ~ profile.personal.linkedin|latex ~ '}}}') %}
+    {% endif %}
+    {% if profile.personal.github %}
+        {% set _ = header_parts.append('\\textcolor{Black}{\\href{https://' ~ profile.personal.github|latex ~ '}{\\underline{' ~ profile.personal.github|latex ~ '}}}') %}
+    {% endif %}
+    {% if profile.personal.email %}
+        {% set _ = header_parts.append('{' ~ profile.personal.email|latex ~ '}') %}
+    {% endif %}
+    {% if profile.personal.phone %}
+        {% set _ = header_parts.append('\\small ' ~ profile.personal.phone|latex) %}
+    {% endif %}
+    {% if profile.personal.citizenship %}
+        {% set _ = header_parts.append(profile.personal.citizenship|latex) %}
+    {% endif %}
+    {{ header_parts | join(' $|$ ') }}
+\end{center}
+
+{% if selection.skills %}
+%-----------PROGRAMMING SKILLS-----------
+\section{Skills}
+    \resumeSubHeadingListStart
+        \item
+        \begin{tabular*}{0.97\textwidth}{@{}l@{\hspace{6ex}}l}
+            {% for skill in selection.skills %}
+            \textbf{ {{- skill.category|latex -}} } & {{ skill.items | map('latex') | join(', ') }}{% if not loop.last %} \\{% endif %}
+            {% endfor %}
+        \end{tabular*}\vspace{-7pt}
+    \resumeSubHeadingListEnd
+{% endif %}
+
+{% if profile.education %}
+%-----------EDUCATION-----------
+\section{Education}
+    \resumeSubHeadingListStart
+        {% for item in profile.education %}
+        \resumeSubheading
+        { {{- item.school|latex -}} }{ {{- item.dates|latex -}} }
+        { {{- item.degree|latex -}} }{ {{- item.location|latex -}} }
+        {% endfor %}
+        {% if selection.courses %}
+        \resumeProjectHeading{\textbf{Relevant Courses}: {{ selection.courses | map('latex') | join(', ') }}}{}
+        {% endif %}
+    \resumeSubHeadingListEnd
+{% endif %}
+
+{% if selection.research %}
+%-----------RESEARCH-----------
+\section{Research}
+    \resumeSubHeadingListStart
+        {% for item in selection.research %}
+        \resumeSubheading
+        {\normalfont {{ item.title|latex }}{% if item.url %} \,\href{ {{- item.url|latex -}} }{\faExternalLink*}{% endif %}}
+        { {{- item.venue|latex -}} }
+        { {{- item.authors|bold_author(profile.personal.name) -}} }
+        {}
+        {% if not loop.last %}
+        
+        \vspace{6pt}
+        
+        {% endif %}
+        {% endfor %}
+    \resumeSubHeadingListEnd
+{% endif %}
+
+{% if profile.experience %}
+%-----------EXPERIENCE-----------
+\section{Experience}
+    \resumeSubHeadingListStart
+        {% for item in profile.experience %}
+        \resumeSubheading
+        { {{- item.company|latex -}} }{ {{- item.dates|latex -}} }
+        { {{- item.title|latex -}} }{ {{- item.location|latex -}} }
+            \resumeItemListStart
+                {% for bullet in item.bullets %}
+                \resumeItem{ {{- bullet|latex -}} }
+                {% endfor %}
+            \resumeItemListEnd
+
+        {% endfor %}
+    \resumeSubHeadingListEnd
+    {% if selection.projects %}\vspace{-8pt}{% endif %}
+{% endif %}
+
+{% if selection.projects %}
+%-----------PROJECTS-----------
+\section{Projects{% if forgejo_note %} \normalfont\small{\hfill{{ forgejo_note }}}{% endif %}}
+    
+    \resumeSubHeadingListStart
+        {% for item in selection.projects %}
+        {% set display_tech = item.tech[:profile.layout.max_project_tech_items] %}
+        \resumeProjectHeading
+        {{ '{{' }}\textbf{ {{- item.title|latex -}} }{% if item.url %} \,
+        {\href{ {{- item.url|latex -}} }{\faCodeBranch}}{% if display_tech %} |{% endif %}{% endif %}
+        {% if display_tech %} \emph{ {{- display_tech | map('latex') | join(', ') -}} }{% endif %}}}{}
+            \resumeItemListStart
+                {% for bullet in item.bullets %}
+                \resumeItem{ {{- bullet|latex -}} }
+                {% endfor %}
+            \resumeItemListEnd
+
+        {% endfor %}
+    \resumeSubHeadingListEnd
+{% endif %}
+
+\end{document}

@@ -1,0 +1,33 @@
+[project]
+name = "resume-tailor"
+version = "0.1.0"
+description = "Local CLI for tailoring a Jake-style resume from YAML inventory and a job description."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "jinja2>=3.1.4",
+  "pydantic>=2.8.0",
+  "pypdf>=4.2.0",
+  "pyyaml>=6.0.2",
+  "sentence-transformers>=3.0.0",
+  "typer>=0.12.3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2.0",
+]
+
+[project.scripts]
+rt = "resume_tailor.cli:app"
+resume-tailor = "resume_tailor.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["resume_tailor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

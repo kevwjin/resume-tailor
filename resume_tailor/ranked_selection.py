@@ -98,8 +98,10 @@ def build_ranked_resume_selection(
     profile: Profile,
     pool: RankedCandidatePool,
     evidence_count: int,
+    optional_course_count: int | None = None,
     optional_skill_counts: dict[str, int] | None = None,
 ) -> ResumeSelection:
+    optional_course_count = optional_course_count if optional_course_count is not None else len(pool.courses)
     optional_skill_counts = optional_skill_counts or {}
     selected_evidence = pool.evidence[:evidence_count]
     project_ids = {item.id for item in selected_evidence if isinstance(item, Project) and not isinstance(item, Research)}
@@ -115,18 +117,22 @@ def build_ranked_resume_selection(
     ]
 
     return ResumeSelection(
-        courses=select_ranked_courses(profile, pool.courses),
+        courses=select_ranked_courses(profile, pool.courses, optional_course_count),
         projects=dedupe_keep_items(projects),
         research=dedupe_keep_items(research),
         skills=select_ranked_skills(profile, pool.skill_choices_by_category, optional_skill_counts),
     )
 
 
-def select_ranked_courses(profile: Profile, optional_courses: Sequence[Course]) -> list[str]:
+def select_ranked_courses(
+    profile: Profile,
+    optional_courses: Sequence[Course],
+    optional_course_count: int | None = None,
+) -> list[str]:
     selected = [course.title for course in profile.courses if course.pos in {Position.PIN, Position.REQ}]
-    for course in optional_courses:
-        candidate = [*selected, course.title]
-        if len(", ".join(candidate)) <= profile.layout.course_line_max_chars:
+    count = optional_course_count if optional_course_count is not None else len(optional_courses)
+    for course in optional_courses[: max(0, count)]:
+        if course.title not in selected:
             selected.append(course.title)
     return dedupe_keep_order(selected)
 

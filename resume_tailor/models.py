@@ -146,8 +146,6 @@ class ForgejoConfig(BaseModel):
 
 
 class LayoutConfig(BaseModel):
-    course_line_max_chars: int = 80
-    max_optional_skills_per_category: int = 0
     max_project_tech_items: int = 6
     max_compile_attempts: int = 50
 

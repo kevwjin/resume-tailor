@@ -235,12 +235,27 @@ def _compile_ranked_until_one_page(
     template: Path | None,
 ) -> ResumeSelection:
     attempts = 0
+    max_attempts = profile.layout.max_compile_attempts
+    exceeded_max_attempts = False
 
-    def candidate(evidence_count: int, optional_skill_counts: dict[str, int] | None = None) -> ResumeSelection:
-        return build_ranked_resume_selection(profile, pool, evidence_count, optional_skill_counts or {})
+    def candidate(
+        evidence_count: int,
+        optional_course_count: int = 0,
+        optional_skill_counts: dict[str, int] | None = None,
+    ) -> ResumeSelection:
+        return build_ranked_resume_selection(
+            profile,
+            pool,
+            evidence_count,
+            optional_course_count,
+            optional_skill_counts or {},
+        )
 
     def fits(selection: ResumeSelection) -> bool:
-        nonlocal attempts
+        nonlocal attempts, exceeded_max_attempts
+        if attempts >= max_attempts:
+            exceeded_max_attempts = True
+            return False
         attempts += 1
         selection.compile_attempts = attempts
         tex_path = render_resume(profile, selection, out, template)
@@ -249,12 +264,20 @@ def _compile_ranked_until_one_page(
 
     evidence_count = _max_fitting_count(
         len(pool.evidence),
-        lambda count: fits(candidate(count, {})),
+        lambda count: fits(candidate(count)),
     )
-    base_selection = candidate(evidence_count, {})
+    course_count = _max_fitting_count(
+        len(pool.courses),
+        lambda count: fits(candidate(evidence_count, count)),
+    )
+    base_selection = candidate(evidence_count, course_count)
     if not fits(base_selection):
         base_selection.compile_attempts = attempts
-        base_selection.needs_review = "required_or_pinned_content_exceeds_page_or_width"
+        base_selection.needs_review = (
+            f"exceeded_max_compile_attempts_{max_attempts}"
+            if exceeded_max_attempts
+            else "required_or_pinned_content_exceeds_page_or_width"
+        )
         return base_selection
 
     optional_skill_counts: dict[str, int] = {}
@@ -265,13 +288,15 @@ def _compile_ranked_until_one_page(
         optional_skill_counts[category] = _max_fitting_count(
             len(pool.skill_choices_by_category[category]),
             lambda count, category=category: fits(
-                candidate(evidence_count, {**optional_skill_counts, category: count})
+                candidate(evidence_count, course_count, {**optional_skill_counts, category: count})
             ),
         )
 
-    final_selection = candidate(evidence_count, optional_skill_counts)
+    final_selection = candidate(evidence_count, course_count, optional_skill_counts)
     fits(final_selection)
     final_selection.compile_attempts = attempts
+    if exceeded_max_attempts:
+        final_selection.needs_review = f"exceeded_max_compile_attempts_{max_attempts}"
     return final_selection
 
 
@@ -335,8 +360,6 @@ def _print_summary(selection: ResumeSelection, rankings: dict[str, list] | None 
     typer.echo("Selected skills: " + ("; ".join(skill_lines) or "(none)"))
     typer.echo("Pruned optional IDs: " + (", ".join(selection.pruned_ids) or "(none)"))
     typer.echo(f"Compile attempts: {selection.compile_attempts}")
-    for warning in selection.warnings:
-        typer.echo(f"Warning: {warning}")
     if selection.needs_review:
         typer.echo(f"needs_review: {selection.needs_review}")
 

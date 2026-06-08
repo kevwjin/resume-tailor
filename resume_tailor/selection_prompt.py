@@ -25,7 +25,7 @@ def build_selection_prompt(profile: Profile, job_text: str) -> str:
         "- `courses` must include every optional course exactly once, using either id or title.",
         "- `skills` must include every optional skill item exactly once under each category.",
         "- Do not include pinned items in the ranking. The CLI includes pinned items automatically.",
-        "- The CLI will binary-search ranked optional evidence and skills until the resume fits one page with no width overflow.",
+        "- The CLI will binary-search ranked optional evidence, courses, and skills until the resume fits one page with no width overflow.",
         "",
         "## Job Description",
         "",

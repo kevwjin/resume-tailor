@@ -57,11 +57,10 @@ def test_courses_parse_section_select_string() -> None:
     ]
 
 
-def test_courses_pin_req_then_optional_fit() -> None:
+def test_courses_pin_req_then_ranked_optional() -> None:
     profile = Profile.model_validate(
         {
             "personal": {"name": "Example User"},
-            "layout": {"course_line_max_chars": 24},
             "courses": [
                 {"id": "a", "title": "Pinned", "pos": "pin"},
                 {"id": "b", "title": "Required", "pos": "req"},
@@ -71,15 +70,13 @@ def test_courses_pin_req_then_optional_fit() -> None:
         }
     )
     courses = [ranked(course, 1.0 - index / 10, index) for index, course in enumerate(profile.courses)]
-    warnings: list[str] = []
-    assert select_courses(profile, courses, warnings) == ["Pinned", "Required", "Opt"]
+    assert select_courses(profile, courses) == ["Pinned", "Required", "Optional Long", "Opt"]
 
 
-def test_courses_fill_by_rank_without_pins() -> None:
+def test_courses_fill_by_rank_without_pins_or_line_budget() -> None:
     profile = Profile.model_validate(
         {
             "personal": {"name": "Example User"},
-            "layout": {"course_line_max_chars": 34},
             "courses": [
                 {"id": "ui", "title": "User Interface Design"},
                 {"id": "db", "title": "Databases"},
@@ -93,16 +90,13 @@ def test_courses_fill_by_rank_without_pins() -> None:
         ranked(profile.courses[0], 0.7, 2),
     ]
 
-    warnings: list[str] = []
-
-    assert select_courses(profile, rankings, warnings) == ["Databases", "Computer Networks"]
+    assert select_courses(profile, rankings) == ["Databases", "Computer Networks", "User Interface Design"]
 
 
 def test_skills_parse_and_rank_optional_group() -> None:
     profile = Profile.model_validate(
         {
             "personal": {"name": "Example User"},
-            "layout": {"max_optional_skills_per_category": 2},
             "skills": [
                 {
                     "id": "languages",
@@ -119,7 +113,7 @@ def test_skills_parse_and_rank_optional_group() -> None:
         ranked_skill(next(item for item in candidates if item.title == "Swift"), 0.7, 2),
     ]
 
-    selection = select_skills(profile, rankings)
+    selection = select_skills(profile, rankings, max_optional_per_category=2)
 
     assert selection[0].category == "Languages"
     assert selection[0].items == [
@@ -155,11 +149,10 @@ def test_skills_parse_commas_inside_parentheses() -> None:
     ]
 
 
-def test_select_resume_keeps_skill_selections() -> None:
+def test_select_resume_starts_with_pinned_skills() -> None:
     profile = Profile.model_validate(
         {
             "personal": {"name": "Example User"},
-            "layout": {"max_optional_skills_per_category": 1},
             "skills": [{"id": "languages", "title": "Languages", "items": "Python, [Go]"}],
         }
     )
@@ -167,14 +160,13 @@ def test_select_resume_keeps_skill_selections() -> None:
     selection = select_resume(profile, [], [], [], [ranked_skill(candidates[0], 0.9)])
 
     assert selection.skills[0].category == "Languages"
-    assert selection.skills[0].items == ["Python", "Go"]
+    assert selection.skills[0].items == ["Python"]
 
 
 def test_select_skills_preserves_multiple_optional_group_positions() -> None:
     profile = Profile.model_validate(
         {
             "personal": {"name": "Example User"},
-            "layout": {"max_optional_skills_per_category": 3},
             "skills": [
                 {
                     "id": "tools",
@@ -191,7 +183,7 @@ def test_select_skills_preserves_multiple_optional_group_positions() -> None:
         ranked_skill(next(item for item in candidates if item.title == "Skill3"), 0.7, 2),
     ]
 
-    selection = select_skills(profile, rankings)
+    selection = select_skills(profile, rankings, max_optional_per_category=3)
 
     assert selection[0].items == ["Skill1", "Skill2", "Skill3", "Skill4", "Skill5", "Skill6"]
 

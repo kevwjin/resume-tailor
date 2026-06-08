@@ -95,6 +95,18 @@ def test_build_ranked_resume_selection_uses_prefix_counts_and_pinned_items() -> 
     assert selection.skills[1].items == ["React", "Jupyter Notebook"]
 
 
+def test_build_ranked_resume_selection_uses_course_prefix_count() -> None:
+    pool = validate_ranked_selection(profile(), valid_ranking())
+    selection = build_ranked_resume_selection(
+        profile(),
+        pool,
+        evidence_count=0,
+        optional_course_count=1,
+    )
+
+    assert selection.courses == ["Distributed Systems", "Computer Networks"]
+
+
 def test_build_ranked_resume_selection_preserves_optional_skill_positions() -> None:
     custom_profile = Profile.model_validate(
         {

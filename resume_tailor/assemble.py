@@ -22,7 +22,6 @@ class ResumeSelection:
     research: list[Research] = field(default_factory=list)
     skills: list[SkillSelection] = field(default_factory=list)
     pruned_ids: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
     compile_attempts: int = 0
     needs_review: str | None = None
 
@@ -58,8 +57,7 @@ def select_resume(
     ranked_research: Sequence[RankedItem],
     ranked_skill_items: Sequence[RankedItem],
 ) -> ResumeSelection:
-    warnings: list[str] = []
-    courses = select_courses(profile, ranked_courses, warnings)
+    courses = select_courses(profile, ranked_courses)
     projects = order_with_pins(profile.projects, ranked_projects)
     research = order_with_pins(profile.research, ranked_research)
     skills = select_skills(profile, ranked_skill_items)
@@ -69,11 +67,10 @@ def select_resume(
         research=research,
         skills=dedupe_skill_selections(skills),
         pruned_ids=[],
-        warnings=warnings,
     )
 
 
-def select_courses(profile: Profile, ranked_courses: Sequence[RankedItem], warnings: list[str]) -> list[str]:
+def select_courses(profile: Profile, ranked_courses: Sequence[RankedItem]) -> list[str]:
     ranked_by_id = {rank.item.id: rank.item for rank in ranked_courses}
     pinned = [course for course in profile.courses if course.pos == Position.PIN]
     required = [ranked_by_id[rank.item.id] for rank in ranked_courses if rank.item.pos == Position.REQ]
@@ -84,13 +81,8 @@ def select_courses(profile: Profile, ranked_courses: Sequence[RankedItem], warni
         if course.title not in selected:
             selected.append(course.title)
 
-    if len(", ".join(selected)) > profile.layout.course_line_max_chars:
-        warnings.append("required_or_pinned_courses_exceed_line_budget")
-        return selected
-
     for course in optional:
-        candidate = [*selected, course.title]
-        if len(", ".join(candidate)) <= profile.layout.course_line_max_chars:
+        if course.title not in selected:
             selected.append(course.title)
     return selected
 
@@ -110,12 +102,7 @@ def select_skills(
     selected: list[SkillSelection] = []
     for skill in profile.skills:
         category = skill.category or skill.title
-        max_optional = max(
-            0,
-            profile.layout.max_optional_skills_per_category
-            if max_optional_per_category is None
-            else max_optional_per_category,
-        )
+        max_optional = max(0, max_optional_per_category or 0)
         ranked_optional = [
             item.title
             for item in ranked_by_category.get(category, [])
